@@ -62,13 +62,13 @@ export class TableCellNode extends GridCellNode {
     );
   }
 
-  static importDOM(): DOMConversionMap | null {
+  static importDOM(): DOMConversionMap<HTMLTableCellElement> | null {
     return {
-      td: (node: Node) => ({
+      td: (node: HTMLTableCellElement) => ({
         conversion: convertTableCellNodeElement,
         priority: 0,
       }),
-      th: (node: Node) => ({
+      th: (node: HTMLTableCellElement) => ({
         conversion: convertTableCellNodeElement,
         priority: 0,
       }),

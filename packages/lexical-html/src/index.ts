@@ -133,7 +133,7 @@ function $appendNodesToHTML(
 }
 
 function getConversionFunction(
-  domNode: Node,
+  domNode: HTMLElement,
   editor: LexicalEditor,
 ): DOMConversionFn | null {
   const {nodeName} = domNode;
@@ -174,8 +174,10 @@ function $createNodesFromDOM(
   }
 
   let currentLexicalNode = null;
-  const transformFunction = getConversionFunction(node, editor);
-  const transformOutput = transformFunction ? transformFunction(node) : null;
+  const transformFunction = getConversionFunction(node as HTMLElement, editor);
+  const transformOutput = transformFunction
+    ? transformFunction(node as HTMLElement)
+    : null;
   let postTransform = null;
 
   if (transformOutput !== null) {
