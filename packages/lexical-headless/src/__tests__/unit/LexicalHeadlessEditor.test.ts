@@ -22,21 +22,27 @@ import {
   $getRoot,
   COMMAND_PRIORITY_NORMAL,
   CONTROLLED_TEXT_INSERTION_COMMAND,
+  EditorState,
+  LexicalEditor,
+  LexicalNode,
   ParagraphNode,
 } from 'lexical';
 
 import {createHeadlessEditor} from '../..';
 
 describe('LexicalHeadlessEditor', () => {
-  let editor;
+  let editor: LexicalEditor;
 
-  async function update(callback) {
+  async function update(callback: () => void) {
     return new Promise((resolve) => {
-      editor.update(callback, {onUpdate: resolve});
+      editor.update(callback, {onUpdate: () => resolve(null)});
     });
   }
 
-  function assertEditorState(editorState, nodes) {
+  function assertEditorState(
+    editorState: EditorState,
+    nodes: Array<Partial<LexicalNode>>,
+  ) {
     const nodesFromState = Array.from(editorState._nodeMap).map(
       (pair) => pair[1],
     );

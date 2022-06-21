@@ -46,7 +46,7 @@ import {
   useState,
 } from 'react';
 import {createPortal} from 'react-dom';
-import {createRoot} from 'react-dom/client';
+import {createRoot, Root} from 'react-dom/client';
 import * as ReactTestUtils from 'react-dom/test-utils';
 
 import {getEditorStateTextContent} from '../../LexicalUtils';
@@ -56,13 +56,10 @@ import {
   createTestEditor,
   TestComposer,
 } from '../utils';
-// No idea why we suddenly need to do this, but it fixes the tests
-// with latest experimental React version.
-global.IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('LexicalEditor tests', () => {
-  let container = null;
-  let reactRoot;
+  let container: HTMLDivElement | null = null;
+  let reactRoot: Root | null = null;
 
   beforeEach(() => {
     container = document.createElement('div');
@@ -103,7 +100,7 @@ describe('LexicalEditor tests', () => {
     return editor;
   }
 
-  let editor: LexicalEditor = null;
+  let editor: LexicalEditor | null = null;
 
   function init(onError?: () => void) {
     const ref = createRef<HTMLDivElement>();
@@ -119,7 +116,7 @@ describe('LexicalEditor tests', () => {
     });
   }
 
-  async function update(fn) {
+  async function update(fn: () => void) {
     editor.update(fn);
 
     return Promise.resolve().then();
@@ -173,7 +170,7 @@ describe('LexicalEditor tests', () => {
   it('Should handle nested updates in the correct sequence', async () => {
     init();
 
-    let log = [];
+    let log: Array<string> = [];
 
     editor.update(() => {
       const root = $getRoot();
@@ -1050,11 +1047,11 @@ describe('LexicalEditor tests', () => {
 
   describe('parseEditorState()', () => {
     let originalText;
-    let parsedParagraph;
+    let parsedParagraph: ParagraphNode | null = null;
     let parsedRoot;
     let parsedText;
-    let paragraphKey;
-    let textKey;
+    let paragraphKey: NodeKey | null = null;
+    let textKey: NodeKey | null = null;
     let parsedEditorState;
 
     it('exportJSON API - parses parsed JSON', async () => {
@@ -1576,12 +1573,12 @@ describe('LexicalEditor tests', () => {
         return elementNode;
       }
 
-      let elementNode1Key;
-      let elementNode2Key;
-      let elementNode3Key;
+      let elementNode1Key: NodeKey;
+      let elementNode2Key: NodeKey;
+      let elementNode3Key: NodeKey;
 
       await update(() => {
-        const paragraph: ParagraphNode = $getRoot().getFirstChild();
+        const paragraph: ParagraphNode | null = $getRoot().getFirstChild();
 
         const elementNode1 = createElementNodeWithText('A');
         elementNode1Key = elementNode1.getKey();
@@ -1598,9 +1595,16 @@ describe('LexicalEditor tests', () => {
       await update(() => {
         const elementNode1 = $getNodeByKey<ElementNode>(elementNode1Key);
         const elementNode2 = $getNodeByKey<ElementNode>(elementNode2Key);
-        const elementNode3: TextNode = $getNodeByKey(elementNode3Key);
-        elementNode2.append(elementNode3);
-        elementNode1.append(elementNode3);
+        const elementNode3 = $getNodeByKey(elementNode3Key);
+
+        if (
+          elementNode1 !== null &&
+          elementNode2 !== null &&
+          elementNode3 !== null
+        ) {
+          elementNode2.append(elementNode3);
+          elementNode1.append(elementNode3);
+        }
       });
 
       expect(container.innerHTML).toBe(
@@ -1758,8 +1762,8 @@ describe('LexicalEditor tests', () => {
     const textNodeMutations = jest.fn();
     editor.registerMutationListener(ParagraphNode, paragraphNodeMutations);
     editor.registerMutationListener(TextNode, textNodeMutations);
-    const paragraphKeys = [];
-    const textNodeKeys = [];
+    const paragraphKeys: Array<NodeKey> = [];
+    const textNodeKeys: Array<NodeKey> = [];
 
     // No await intentional (batch with next)
     editor.update(() => {
@@ -1830,7 +1834,7 @@ describe('LexicalEditor tests', () => {
     const initialEditorState = editor.getEditorState();
     const textNodeMutations = jest.fn();
     editor.registerMutationListener(TextNode, textNodeMutations);
-    const textNodeKeys = [];
+    const textNodeKeys: Array<NodeKey> = [];
 
     await editor.update(() => {
       const paragraph = $getRoot().getFirstChild<ParagraphNode>();
@@ -1947,8 +1951,8 @@ describe('LexicalEditor tests', () => {
     editor.registerMutationListener(ParagraphNode, paragraphNodeMutations);
     editor.registerMutationListener(TextNode, textNodeMutations);
 
-    const paragraphNodeKeys = [];
-    const textNodeKeys = [];
+    const paragraphNodeKeys: Array<NodeKey> = [];
+    const textNodeKeys: Array<NodeKey> = [];
 
     await editor.update(() => {
       const root = $getRoot();

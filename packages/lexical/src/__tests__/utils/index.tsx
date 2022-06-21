@@ -26,28 +26,30 @@ import {HeadingNode, QuoteNode} from '@lexical/rich-text';
 import {TableCellNode, TableNode, TableRowNode} from '@lexical/table';
 import {createEditor, DecoratorNode, ElementNode, TextNode} from 'lexical';
 import * as React from 'react';
-import {createRef} from 'react';
+import {createRef, RefObject} from 'react';
 import {createRoot} from 'react-dom/client';
 import * as ReactTestUtils from 'react-dom/test-utils';
+import {Klass} from 'shared/types';
 
 import {resetRandomKey} from '../../LexicalUtils';
 
 type TestEnv = {
-  container: HTMLDivElement | null;
-  editor: LexicalEditor | null;
+  container?: HTMLDivElement;
+  editor?: LexicalEditor;
   outerHTML: string;
 };
 
 export function initializeUnitTest(
-  runTests: (testEnv: TestEnv) => void,
+  runTests: (testEnv: Required<TestEnv>) => void,
   editorConfig = {},
 ) {
   const testEnv: TestEnv = {
-    container: null,
-    editor: null,
-
     get outerHTML() {
-      return this.container.innerHTML;
+      if (this.container) {
+        return this.container.innerHTML;
+      }
+
+      return '';
     },
   };
 
@@ -58,7 +60,7 @@ export function initializeUnitTest(
     document.body.appendChild(testEnv.container);
     const ref = createRef<HTMLDivElement>();
 
-    const useLexicalEditor = (rootElementRef) => {
+    const useLexicalEditor = (rootElementRef: RefObject<HTMLDivElement>) => {
       const lexicalEditor = React.useMemo(() => {
         const lexical = createTestEditor(editorConfig);
         return lexical;
@@ -77,16 +79,22 @@ export function initializeUnitTest(
     };
 
     ReactTestUtils.act(() => {
-      createRoot(testEnv.container).render(<Editor />);
+      if (testEnv.container) {
+        createRoot(testEnv.container).render(<Editor />);
+      }
     });
   });
 
   afterEach(() => {
-    document.body.removeChild(testEnv.container);
-    testEnv.container = null;
+    if (testEnv.container) {
+      document.body.removeChild(testEnv.container);
+    }
+    delete testEnv.container;
   });
 
-  runTests(testEnv);
+  if (testEnv.container !== undefined && testEnv.editor !== undefined) {
+    runTests(testEnv as Required<TestEnv>);
+  }
 }
 
 export type SerializedTestElementNode = Spread<
@@ -226,7 +234,7 @@ export class TestSegmentedNode extends TextNode {
   }
 }
 
-export function $createTestSegmentedNode(text): TestSegmentedNode {
+export function $createTestSegmentedNode(text: string): TestSegmentedNode {
   return new TestSegmentedNode(text).setMode('segmented');
 }
 
@@ -326,7 +334,7 @@ export class TestDecoratorNode extends DecoratorNode<JSX.Element> {
   }
 }
 
-function Decorator({text}): JSX.Element {
+function Decorator({text}: {text: string}): JSX.Element {
   return <span>{text}</span>;
 }
 
@@ -361,8 +369,14 @@ export function TestComposer({
     theme: {},
   },
   children,
-}) {
-  const customNodes = config.nodes;
+}: {
+  config: {
+    nodes: ReadonlyArray<Klass<never>>;
+    theme: EditorThemeClasses;
+  };
+  children: JSX.Element | string | (JSX.Element | string)[];
+}): JSX.Element {
+  const customNodes = config.nodes as ReadonlyArray<never>;
   return (
     <LexicalComposer
       initialConfig={{

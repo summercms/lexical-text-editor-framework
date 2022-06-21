@@ -248,7 +248,7 @@ describe('LexicalListNode tests', () => {
 
         expect(listNode.append(...nodesToAppend)).toBe(listNode);
         expect($isListItemNode(listNode.getFirstChild())).toBe(true);
-        expect(listNode.getFirstChild<ListItemNode>().getFirstChild()).toBe(
+        expect(listNode.getFirstChild<ListItemNode>()?.getFirstChild()).toBe(
           nestedListNode,
         );
       });
