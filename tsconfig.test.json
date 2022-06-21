@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "strict": true
   },
+  "include": ["**/*.test.ts", "**/*.test.tsx"],
+  "exclude": ["node_modules/**/*", "packages/playwright-core/**/*"],
   "extends": "./tsconfig.json"
 }

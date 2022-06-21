@@ -54,11 +54,11 @@ const $createSelectionByPath = ({
   const root = $getRoot();
 
   const anchorNode = anchorPath.reduce(
-    (node, index) => node.getChildAtIndex(index),
+    (node, index) => node.getChildAtIndex(index) || node,
     root,
   );
   const focusNode = focusPath.reduce(
-    (node, index) => node.getChildAtIndex(index),
+    (node, index) => node.getChildAtIndex(index) || node,
     root,
   );
 
@@ -97,11 +97,13 @@ const $replaceTextByPath = ({
     focusOffset,
     focusPath,
   });
-  selection.insertText(text);
+  if (text !== null) {
+    selection.insertText(text);
+  }
 };
 
 describe('CollaborationWithCollisions', () => {
-  let container = null;
+  let container: HTMLDivElement | null = null;
 
   beforeEach(() => {
     container = document.createElement('div');
@@ -109,7 +111,9 @@ describe('CollaborationWithCollisions', () => {
   });
 
   afterEach(() => {
-    document.body.removeChild(container);
+    if (container !== null) {
+      document.body.removeChild(container);
+    }
     container = null;
   });
 
@@ -133,7 +137,7 @@ describe('CollaborationWithCollisions', () => {
         },
         () => {
           // Second client deletes first paragraph
-          $getRoot().getFirstChild().remove();
+          $getRoot()?.getFirstChild()?.remove();
         },
       ],
       expectedHTML: null,
@@ -154,7 +158,7 @@ describe('CollaborationWithCollisions', () => {
         },
         () => {
           // Second client deletes first paragraph
-          $getRoot().getFirstChild().remove();
+          $getRoot()?.getFirstChild()?.remove();
         },
       ],
       expectedHTML: null,
@@ -199,6 +203,10 @@ describe('CollaborationWithCollisions', () => {
   SIMPLE_TEXT_COLLISION_TESTS.forEach((testCase) => {
     it(testCase.name, async () => {
       const connection = createTestConnection();
+      if (container === null) {
+        throw Error('container is `undefined`');
+      }
+
       const clients = createAndStartClients(
         connection,
         container,

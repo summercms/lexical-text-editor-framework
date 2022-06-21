@@ -14,6 +14,9 @@ import {
   $getSelection,
   $isNodeSelection,
   ElementNode,
+  LexicalEditor,
+  LexicalNode,
+  NodeKey,
   ParagraphNode,
   TextFormatType,
   TextModeType,
@@ -56,7 +59,7 @@ const editorConfig = Object.freeze({
 });
 
 describe('LexicalTextNode tests', () => {
-  let container = null;
+  let container: HTMLDivElement | null = null;
 
   beforeEach(async () => {
     container = document.createElement('div');
@@ -69,24 +72,26 @@ describe('LexicalTextNode tests', () => {
     container = null;
   });
 
-  async function update(fn) {
-    editor.update(fn);
+  let editor: LexicalEditor | null = null;
+
+  async function update(fn: () => void) {
+    if (editor) {
+      editor.update(fn);
+    }
     return Promise.resolve().then();
   }
 
   function useLexicalEditor(rootElementRef) {
-    const editor = useMemo(() => createTestEditor(editorConfig), []);
+    const innerEditor = useMemo(() => createTestEditor(editorConfig), []);
 
     useEffect(() => {
       const rootElement = rootElementRef.current;
 
-      editor.setRootElement(rootElement);
-    }, [rootElementRef, editor]);
+      innerEditor.setRootElement(rootElement);
+    }, [rootElementRef, innerEditor]);
 
-    return editor;
+    return innerEditor;
   }
-
-  let editor = null;
 
   async function init() {
     const ref = createRef<HTMLDivElement>();
@@ -119,7 +124,8 @@ describe('LexicalTextNode tests', () => {
         // If you broke this test, you changed the public interface of a
         // serialized Lexical Core Node. Please ensure the correct adapter
         // logic is in place in the corresponding importJSON  method
-        // to accomodate these changes.
+        // to accomodate these changes.import { EditorConfig } from 'lexical';
+
         expect(node.exportJSON()).toStrictEqual({
           detail: 0,
           format: 0,
@@ -135,7 +141,7 @@ describe('LexicalTextNode tests', () => {
 
   describe('root.getTextContent()', () => {
     test('writable nodes', async () => {
-      let nodeKey;
+      let nodeKey: NodeKey;
 
       await update(() => {
         const textNode = $createTextNode('Text');
@@ -159,13 +165,16 @@ describe('LexicalTextNode tests', () => {
 
       // Make sure that the editor content is still set after further reconciliations
       await update(() => {
-        $getNodeByKey(nodeKey).markDirty();
+        const node = $getNodeByKey(nodeKey);
+        if (node) {
+          node.markDirty();
+        }
       });
       expect(getEditorStateTextContent(editor.getEditorState())).toBe('Text');
     });
 
     test('inert nodes', async () => {
-      let nodeKey;
+      let nodeKey: NodeKey;
 
       await update(() => {
         const textNode = $createTextNode('Inert text').setMode('inert');
@@ -175,13 +184,18 @@ describe('LexicalTextNode tests', () => {
 
         expect(textNode.getTextContent(true)).toBe('Inert text');
         expect(textNode.__text).toBe('Inert text');
-        $getRoot().getFirstChild<ElementNode>().append(textNode);
+        const childNode = $getRoot().getFirstChild<ElementNode>();
+        if (childNode) {
+          childNode.append(textNode);
+        }
       });
       expect(getEditorStateTextContent(editor.getEditorState())).toBe('');
 
       // Make sure that the editor content is still empty after further reconciliations
       await update(() => {
-        $getNodeByKey(nodeKey).markDirty();
+        if (nodeKey !== null) {
+          $getNodeByKey(nodeKey).markDirty();
+        }
       });
 
       expect(getEditorStateTextContent(editor.getEditorState())).toBe('');
@@ -232,32 +246,32 @@ describe('LexicalTextNode tests', () => {
     [
       'bold',
       IS_BOLD,
-      (node) => node.hasFormat('bold'),
-      (node) => node.toggleFormat('bold'),
+      (node: LexicalNode) => node.hasFormat('bold'),
+      (node: LexicalNode) => node.toggleFormat('bold'),
     ],
     [
       'italic',
       IS_ITALIC,
-      (node) => node.hasFormat('italic'),
-      (node) => node.toggleFormat('italic'),
+      (node: LexicalNode) => node.hasFormat('italic'),
+      (node: LexicalNode) => node.toggleFormat('italic'),
     ],
     [
       'strikethrough',
       IS_STRIKETHROUGH,
-      (node) => node.hasFormat('strikethrough'),
-      (node) => node.toggleFormat('strikethrough'),
+      (node: LexicalNode) => node.hasFormat('strikethrough'),
+      (node: LexicalNode) => node.toggleFormat('strikethrough'),
     ],
     [
       'underline',
       IS_UNDERLINE,
-      (node) => node.hasFormat('underline'),
-      (node) => node.toggleFormat('underline'),
+      (node: LexicalNode) => node.hasFormat('underline'),
+      (node: LexicalNode) => node.toggleFormat('underline'),
     ],
     [
       'code',
       IS_CODE,
-      (node) => node.hasFormat('code'),
-      (node) => node.toggleFormat('code'),
+      (node: LexicalNode) => node.hasFormat('code'),
+      (node: LexicalNode) => node.toggleFormat('code'),
     ],
   ])(
     '%s flag',
@@ -445,9 +459,9 @@ describe('LexicalTextNode tests', () => {
           const splitNodes = textNode.splitText(...splitOffsets);
 
           expect(paragraphNode.getChildren()).toHaveLength(splitStrings.length);
-          expect(splitNodes.map((node) => node.getTextContent())).toEqual(
-            splitStrings,
-          );
+          expect(
+            splitNodes.map((node: LexicalNode) => node.getTextContent()),
+          ).toEqual(splitStrings);
         });
       },
     );
@@ -785,7 +799,7 @@ describe('LexicalTextNode tests', () => {
       const selection = $getSelection();
       textNode2.mergeWithSibling(textNode1);
 
-      if ($isNodeSelection(selection)) {
+      if (!selection || $isNodeSelection(selection)) {
         return;
       }
 

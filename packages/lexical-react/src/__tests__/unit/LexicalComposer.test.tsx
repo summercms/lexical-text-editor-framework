@@ -8,14 +8,14 @@
 
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import * as React from 'react';
-import {createRoot} from 'react-dom/client';
+import {createRoot, Root} from 'react-dom/client';
 import * as ReactTestUtils from 'react-dom/test-utils';
 
 import {LexicalComposer} from '../../LexicalComposer';
 
 describe('LexicalNodeHelpers tests', () => {
-  let container = null;
-  let reactRoot;
+  let container: HTMLDivElement | null = null;
+  let reactRoot: Root | null = null;
 
   beforeEach(() => {
     container = document.createElement('div');
@@ -24,7 +24,9 @@ describe('LexicalNodeHelpers tests', () => {
   });
 
   afterEach(() => {
-    document.body.removeChild(container);
+    if (container !== null) {
+      document.body.removeChild(container);
+    }
     container = null;
 
     jest.restoreAllMocks();
@@ -56,7 +58,7 @@ describe('LexicalNodeHelpers tests', () => {
     }
 
     await ReactTestUtils.act(async () => {
-      reactRoot.render(<App />);
+      reactRoot?.render(<App />);
     });
   });
 });

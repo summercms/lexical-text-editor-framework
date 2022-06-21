@@ -11,6 +11,7 @@ import {LexicalEditor} from 'lexical';
 import * as React from 'react';
 import {createRoot, Root} from 'react-dom/client';
 import * as ReactTestUtils from 'react-dom/test-utils';
+import {WebsocketProvider} from 'y-websocket';
 import * as Y from 'yjs';
 
 import {
@@ -21,7 +22,15 @@ import {LexicalComposer} from '../../LexicalComposer';
 import {ContentEditable} from '../../LexicalContentEditable';
 import {RichTextPlugin} from '../../LexicalRichTextPlugin';
 
-function Editor({doc, provider, setEditor}) {
+function Editor({
+  doc,
+  provider,
+  setEditor,
+}: {
+  doc: Y.Doc;
+  provider: Client;
+  setEditor: (editor: LexicalEditor) => void;
+}): JSX.Element {
   const {yjsDocMap} = useCollaborationContext();
 
   const [editor] = useLexicalComposerContext();
@@ -34,28 +43,25 @@ function Editor({doc, provider, setEditor}) {
     <>
       <CollaborationPlugin
         id="main"
-        providerFactory={() => provider}
+        providerFactory={() => provider as unknown as WebsocketProvider}
         shouldBootstrap={true}
       />
-      <RichTextPlugin
-        contentEditable={<ContentEditable />}
-        placeholder={null}
-      />
+      <RichTextPlugin contentEditable={<ContentEditable />} placeholder={''} />
     </>
   );
 }
 
-class Client {
+export class Client {
   _id: string;
-  _reactRoot: Root;
-  _container: HTMLDivElement;
-  _editor: LexicalEditor;
+  _reactRoot: Root | null = null;
+  _container: HTMLDivElement | null = null;
+  _editor: LexicalEditor | null = null;
   _connection: {
     _clients: Client[];
   };
   _connected: boolean;
   _doc: Y.Doc;
-  _awarenessState: unknown;
+  _awarenessState: any;
 
   _listeners: Map<string, Set<(data: unknown) => void>>;
   _updates: Uint8Array[];
@@ -64,13 +70,16 @@ class Client {
     getStates(): void;
     off(): void;
     on(): void;
-    setLocalState(state): void;
+    setLocalState(state: unknown): void;
   };
 
-  constructor(id, connection) {
+  constructor(
+    id: string,
+    connection: {
+      _clients: Client[];
+    },
+  ) {
     this._id = id;
-    this._reactRoot = null;
-    this._container = null;
     this._connection = connection;
     this._connected = false;
     this._doc = new Y.Doc();
@@ -83,13 +92,15 @@ class Client {
     this._updates = [];
     this._editor = null;
 
+    const self = this;
+
     this.awareness = {
       getLocalState() {
-        return this._awarenessState;
+        return self._awarenessState;
       },
 
       getStates() {
-        return [[0, this._awarenessState]];
+        return [[0, self._awarenessState]];
       },
 
       off() {
@@ -101,18 +112,23 @@ class Client {
       },
 
       setLocalState(state) {
-        this._awarenessState = state;
+        self._awarenessState = state;
       },
     };
   }
 
-  _onUpdate(update, origin, transaction) {
+  _onUpdate(
+    update: Uint8Array,
+    origin: {
+      _clients: Client[];
+    },
+  ) {
     if (origin !== this._connection && this._connected) {
       this._broadcastUpdate(update);
     }
   }
 
-  _broadcastUpdate(update) {
+  _broadcastUpdate(update: Uint8Array) {
     this._connection._clients.forEach((client) => {
       if (client !== this) {
         if (client._connected) {
@@ -148,7 +164,7 @@ class Client {
     this._connected = false;
   }
 
-  start(rootContainer) {
+  start(rootContainer: HTMLElement) {
     const container = document.createElement('div');
     const reactRoot = createRoot(container);
     this._container = container;
@@ -168,7 +184,7 @@ class Client {
           <Editor
             provider={this}
             doc={this._doc}
-            setEditor={(editor) => (this._editor = editor)}
+            setEditor={(editor: LexicalEditor) => (this._editor = editor)}
           />
         </LexicalComposer>,
       );
@@ -177,15 +193,15 @@ class Client {
 
   stop() {
     ReactTestUtils.act(() => {
-      this._reactRoot.render(null);
+      this._reactRoot?.render(null);
     });
 
-    this._container.parentNode.removeChild(this._container);
+    this._container?.parentNode?.removeChild(this._container);
 
     this._container = null;
   }
 
-  on(type, callback) {
+  on(type: string, callback: (data: unknown) => void) {
     let listenerSet = this._listeners.get(type);
 
     if (listenerSet === undefined) {
@@ -197,7 +213,7 @@ class Client {
     listenerSet.add(callback);
   }
 
-  off(type, callback) {
+  off(type: string, callback: (data: unknown) => void) {
     const listenerSet = this._listeners.get(type);
 
     if (listenerSet !== undefined) {
@@ -205,7 +221,7 @@ class Client {
     }
   }
 
-  _dispatch(type, data) {
+  _dispatch(type: string, data: unknown) {
     const listenerSet = this._listeners.get(type);
 
     if (listenerSet !== undefined) {
@@ -214,7 +230,7 @@ class Client {
   }
 
   getHTML() {
-    return (this._container.firstChild as HTMLElement).innerHTML;
+    return (this._container?.firstChild as HTMLElement).innerHTML;
   }
 
   getDocJSON() {
@@ -222,7 +238,7 @@ class Client {
   }
 
   getEditorState() {
-    return this._editor.getEditorState();
+    return this._editor?.getEditorState();
   }
 
   getEditor() {
@@ -234,13 +250,13 @@ class Client {
   }
 
   async focus() {
-    this._container.focus();
+    this._container?.focus();
 
     await Promise.resolve().then();
   }
 
-  update(cb) {
-    this._editor.update(cb);
+  update(cb: () => void) {
+    this._editor?.update(cb);
   }
 }
 
@@ -251,8 +267,13 @@ class TestConnection {
     this._clients = new Map();
   }
 
-  createClient(id) {
-    const client = new Client(id, this);
+  createClient(id: string) {
+    const client = new Client(
+      id,
+      this as unknown as {
+        _clients: Client[];
+      },
+    );
 
     this._clients.set(id, client);
 
@@ -264,7 +285,7 @@ export function createTestConnection() {
   return new TestConnection();
 }
 
-export async function waitForReact(cb) {
+export async function waitForReact(cb: () => void) {
   await ReactTestUtils.act(async () => {
     cb();
     await Promise.resolve().then();

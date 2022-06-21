@@ -124,9 +124,9 @@ describe('LexicalListItemNode tests', () => {
 
     describe('ListItemNode.replace()', () => {
       let listNode;
-      let listItemNode1;
-      let listItemNode2;
-      let listItemNode3;
+      let listItemNode1: ListItemNode;
+      let listItemNode2: ListItemNode;
+      let listItemNode3: ListItemNode;
 
       beforeEach(async () => {
         const {editor} = testEnv;
@@ -239,9 +239,9 @@ describe('LexicalListItemNode tests', () => {
 
     describe('ListItemNode.insertNewAfter(): non-empty list items', () => {
       let listNode;
-      let listItemNode1;
-      let listItemNode2;
-      let listItemNode3;
+      let listItemNode1: ListItemNode;
+      let listItemNode2: ListItemNode;
+      let listItemNode3: ListItemNode;
 
       beforeEach(async () => {
         const {editor} = testEnv;
@@ -351,8 +351,8 @@ describe('LexicalListItemNode tests', () => {
 
     describe('ListItemNode.setIndent()', () => {
       let listNode;
-      let listItemNode1;
-      let listItemNode2;
+      let listItemNode1: ListItemNode;
+      let listItemNode2: ListItemNode;
 
       beforeEach(async () => {
         const {editor} = testEnv;
@@ -373,6 +373,8 @@ describe('LexicalListItemNode tests', () => {
       it('indents and outdents list item', async () => {
         const {editor} = testEnv;
 
+        let rootElement: HTMLElement | null;
+
         await editor.update(() => {
           listItemNode1.setIndent(3);
         });
@@ -381,9 +383,15 @@ describe('LexicalListItemNode tests', () => {
           expect(listItemNode1.getIndent()).toBe(3);
         });
 
-        expect(editor.getRootElement().innerHTML).toBe(
-          '<ul><li value="1"><ul><li value="1"><ul><li value="1"><ul><li value="1" dir="ltr"><span data-lexical-text="true">one</span></li></ul></li></ul></li></ul></li><li value="1" dir="ltr"><span data-lexical-text="true">two</span></li></ul>',
-        );
+        rootElement = editor.getRootElement();
+
+        expect(rootElement).not.toBeNull();
+
+        if (rootElement) {
+          expect(rootElement.innerHTML).toBe(
+            '<ul><li value="1"><ul><li value="1"><ul><li value="1"><ul><li value="1" dir="ltr"><span data-lexical-text="true">one</span></li></ul></li></ul></li></ul></li><li value="1" dir="ltr"><span data-lexical-text="true">two</span></li></ul>',
+          );
+        }
 
         await editor.update(() => {
           listItemNode1.setIndent(0);
@@ -393,9 +401,15 @@ describe('LexicalListItemNode tests', () => {
           expect(listItemNode1.getIndent()).toBe(0);
         });
 
-        expect(editor.getRootElement().innerHTML).toBe(
-          '<ul><li value="1" dir="ltr"><span data-lexical-text="true">one</span></li><li value="2" dir="ltr"><span data-lexical-text="true">two</span></li></ul>',
-        );
+        rootElement = editor.getRootElement();
+
+        expect(rootElement).not.toBeNull();
+
+        if (rootElement) {
+          expect(rootElement.innerHTML).toBe(
+            '<ul><li value="1" dir="ltr"><span data-lexical-text="true">one</span></li><li value="2" dir="ltr"><span data-lexical-text="true">two</span></li></ul>',
+          );
+        }
       });
     });
   });

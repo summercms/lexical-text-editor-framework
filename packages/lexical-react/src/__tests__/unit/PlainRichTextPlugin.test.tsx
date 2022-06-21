@@ -21,9 +21,10 @@ import {
   $getRoot,
   $getSelection,
   $isNodeSelection,
+  LexicalEditor,
 } from 'lexical';
 import * as React from 'react';
-import {createRoot} from 'react-dom/client';
+import {createRoot, Root} from 'react-dom/client';
 import * as ReactTestUtils from 'react-dom/test-utils';
 
 import {LexicalComposer} from '../../LexicalComposer';
@@ -32,8 +33,8 @@ import {PlainTextPlugin} from '../../LexicalPlainTextPlugin';
 import {RichTextPlugin} from '../../LexicalRichTextPlugin';
 
 describe('LexicalNodeHelpers tests', () => {
-  let container = null;
-  let reactRoot;
+  let container: HTMLDivElement | null = null;
+  let reactRoot: Root | null = null;
 
   beforeEach(() => {
     container = document.createElement('div');
@@ -42,7 +43,9 @@ describe('LexicalNodeHelpers tests', () => {
   });
 
   afterEach(() => {
-    document.body.removeChild(container);
+    if (container !== null) {
+      document.body.removeChild(container);
+    }
     container = null;
 
     jest.restoreAllMocks();
@@ -50,7 +53,7 @@ describe('LexicalNodeHelpers tests', () => {
 
   for (const plugin of ['PlainTextPlugin', 'RichTextPlugin']) {
     it(`${plugin} custom initialEditorState`, async () => {
-      let editor;
+      let editor: LexicalEditor;
 
       function GrabEditor() {
         [editor] = useLexicalComposerContext();
@@ -109,17 +112,19 @@ describe('LexicalNodeHelpers tests', () => {
       }
 
       await ReactTestUtils.act(async () => {
-        reactRoot.render(<App />);
+        reactRoot?.render(<App />);
       });
 
-      const text = editor.getEditorState().read($rootTextContent);
+      // @ts-expect-error
+      const text = editor?.getEditorState()?.read($rootTextContent);
       expect(text).toBe('foo');
     });
   }
 
   for (const plugin of ['PlainTextPlugin', 'RichTextPlugin']) {
     it(`${plugin} custom initialEditorState`, async () => {
-      let editor;
+      let editor: LexicalEditor;
+
       const initialEditorStateJson = `
       {"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"foo","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}
       `;
@@ -175,17 +180,19 @@ describe('LexicalNodeHelpers tests', () => {
       }
 
       await ReactTestUtils.act(async () => {
-        reactRoot.render(<App />);
+        reactRoot?.render(<App />);
       });
 
-      await editor.focus();
+      // @ts-expect-error
+      await editor?.focus();
 
+      // @ts-expect-error
       await editor.getEditorState().read(() => {
         expect($rootTextContent()).toBe('foo');
 
         const selection = $getSelection();
 
-        if ($isNodeSelection(selection)) {
+        if (selection === null || $isNodeSelection(selection)) {
           return;
         }
 

@@ -81,7 +81,7 @@ describe('LexicalHeadingNode tests', () => {
 
     test('HeadingNode.insertNewAfter()', async () => {
       const {editor} = testEnv;
-      let headingNode;
+      let headingNode: HeadingNode | null = null;
       await editor.update(() => {
         const root = $getRoot();
         headingNode = new HeadingNode('h1');
@@ -91,9 +91,9 @@ describe('LexicalHeadingNode tests', () => {
         '<div contenteditable="true" style="user-select: text; white-space: pre-wrap; word-break: break-word;" data-lexical-editor="true"><h1><br></h1></div>',
       );
       await editor.update(() => {
-        const result = headingNode.insertNewAfter();
+        const result = headingNode?.insertNewAfter();
         expect(result).toBeInstanceOf(ParagraphNode);
-        expect(result.getDirection()).toEqual(headingNode.getDirection());
+        expect(result?.getDirection()).toEqual(headingNode?.getDirection());
       });
       expect(testEnv.outerHTML).toBe(
         '<div contenteditable="true" style="user-select: text; white-space: pre-wrap; word-break: break-word;" data-lexical-editor="true"><h1><br></h1><p><br></p></div>',
@@ -129,7 +129,7 @@ describe('LexicalHeadingNode tests', () => {
 
     test('creates a h2 with text and can insert a new paragraph after', async () => {
       const {editor} = testEnv;
-      let headingNode;
+      let headingNode: HeadingNode | null = null;
       const text = 'hello world';
       await editor.update(() => {
         const root = $getRoot();
@@ -142,9 +142,9 @@ describe('LexicalHeadingNode tests', () => {
         `<div contenteditable="true" style="user-select: text; white-space: pre-wrap; word-break: break-word;" data-lexical-editor="true"><h2 dir="ltr"><span data-lexical-text="true">${text}</span></h2></div>`,
       );
       await editor.update(() => {
-        const result = headingNode.insertNewAfter();
+        const result = headingNode?.insertNewAfter();
         expect(result).toBeInstanceOf(ParagraphNode);
-        expect(result.getDirection()).toEqual(headingNode.getDirection());
+        expect(result?.getDirection()).toEqual(headingNode?.getDirection());
       });
       expect(testEnv.outerHTML).toBe(
         `<div contenteditable="true" style="user-select: text; white-space: pre-wrap; word-break: break-word;" data-lexical-editor="true"><h2 dir="ltr"><span data-lexical-text="true">${text}</span></h2><p><br></p></div>`,

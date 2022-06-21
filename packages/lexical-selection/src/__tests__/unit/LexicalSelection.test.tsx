@@ -20,7 +20,10 @@ import {
   $getSelection,
   $isNodeSelection,
   $isRangeSelection,
+  DecoratorNode,
+  LexicalEditor,
   ParagraphNode,
+  TextNode,
 } from 'lexical';
 import {
   $createTestDecoratorNode,
@@ -66,7 +69,7 @@ jest.mock('shared/environment', () => {
 });
 
 describe('LexicalSelection tests', () => {
-  let container = null;
+  let container: HTMLDivElement | null = null;
 
   beforeEach(async () => {
     container = document.createElement('div');
@@ -76,15 +79,17 @@ describe('LexicalSelection tests', () => {
   });
 
   afterEach(() => {
-    document.body.removeChild(container);
+    if (container) {
+      document.body.removeChild(container);
+    }
     container = null;
   });
 
-  let editor = null;
+  let editor: LexicalEditor;
 
   async function init() {
     function TestBase() {
-      function TestPlugin(): JSX.Element {
+      function TestPlugin(): JSX.Element | null {
         [editor] = useLexicalComposerContext();
 
         return null;
@@ -116,9 +121,7 @@ describe('LexicalSelection tests', () => {
               text: {
                 bold: 'editor-text-bold',
                 code: 'editor-text-code',
-                hashtag: 'editor-text-hashtag',
                 italic: 'editor-text-italic',
-                link: 'editor-text-link',
                 strikethrough: 'editor-text-strikethrough',
                 underline: 'editor-text-underline',
                 underlineStrikethrough: 'editor-text-underlineStrikethrough',
@@ -128,7 +131,7 @@ describe('LexicalSelection tests', () => {
           <RichTextPlugin
             contentEditable={
               // eslint-disable-next-line jsx-a11y/aria-role
-              <ContentEditable role={null} spellCheck={null} />
+              <ContentEditable role="" spellCheck={true} />
             }
             placeholder=""
           />
@@ -139,14 +142,16 @@ describe('LexicalSelection tests', () => {
     }
 
     ReactTestUtils.act(() => {
-      createRoot(container).render(<TestBase />);
+      if (container) {
+        createRoot(container).render(<TestBase />);
+      }
     });
 
-    editor.getRootElement().focus();
+    editor?.getRootElement()?.focus();
 
     await Promise.resolve().then();
     // Focus first element
-    setNativeSelectionWithPaths(editor.getRootElement(), [0, 0], 0, [0, 0], 0);
+    setNativeSelectionWithPaths(editor?.getRootElement(), [0, 0], 0, [0, 0], 0);
   }
 
   async function update(fn) {
@@ -165,6 +170,10 @@ describe('LexicalSelection tests', () => {
 
   function assertSelection(rootElement, expectedSelection) {
     const actualSelection = window.getSelection();
+
+    if (!actualSelection) {
+      return;
+    }
 
     expect(actualSelection.anchorNode).toBe(
       getNodeFromPath(expectedSelection.anchorPath, rootElement),
@@ -980,7 +989,7 @@ describe('LexicalSelection tests', () => {
       // Collapsed selection on end; add/remove/replace beginning
       {
         anchorOffset: 2,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const newText = $createTextNode('2');
           text.insertBefore(newText);
 
@@ -996,7 +1005,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 2,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const newText = $createTextNode('2');
           text.insertAfter(newText);
 
@@ -1012,7 +1021,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 2,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           text.splitText(1);
 
           return {
@@ -1027,7 +1036,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 1,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           text.remove();
 
           return {
@@ -1042,7 +1051,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 1,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const newText = $createTextNode('replacement');
           text.replace(newText);
 
@@ -1059,7 +1068,7 @@ describe('LexicalSelection tests', () => {
       // All selected; add/remove/replace on beginning
       {
         anchorOffset: 0,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const newText = $createTextNode('2');
           text.insertBefore(newText);
 
@@ -1075,7 +1084,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText) => {
+        fn: (paragraph: ParagraphNode, originalText: TextNode) => {
           const [, text] = originalText.splitText(1);
 
           return {
@@ -1090,7 +1099,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           text.remove();
 
           return {
@@ -1105,7 +1114,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const newText = $createTextNode('replacement');
           text.replace(newText);
 
@@ -1122,7 +1131,7 @@ describe('LexicalSelection tests', () => {
       // Selection beginning; add/remove/replace on end
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = originalText1.getPreviousSibling();
           const lastChild = paragraph.getLastChild();
           const newText = $createTextNode('2');
@@ -1135,7 +1144,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 0,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1144,7 +1153,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const lastChild = paragraph.getLastChild();
           const newText = $createTextNode('2');
           lastChild.insertAfter(newText);
@@ -1161,7 +1170,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = originalText1.getPreviousSibling();
           const [, text] = originalText1.splitText(1);
 
@@ -1172,7 +1181,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 0,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1181,9 +1190,9 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const lastChild = paragraph.getLastChild();
-          lastChild.remove();
+          lastChild?.remove();
 
           return {
             expectedAnchor: text,
@@ -1197,10 +1206,10 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const newText = $createTextNode('replacement');
           const lastChild = paragraph.getLastChild();
-          lastChild.replace(newText);
+          lastChild?.replace(newText);
 
           return {
             expectedAnchor: paragraph,
@@ -1215,7 +1224,7 @@ describe('LexicalSelection tests', () => {
       // All selected; add/remove/replace in end offset [1, 2] -> [1, N, 2]
       {
         anchorOffset: 0,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const lastChild = paragraph.getLastChild();
           const newText = $createTextNode('2');
           lastChild.insertBefore(newText);
@@ -1232,7 +1241,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, text) => {
+        fn: (paragraph: ParagraphNode, text: TextNode) => {
           const newText = $createTextNode('2');
           text.insertAfter(newText);
 
@@ -1248,7 +1257,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = originalText1.getPreviousSibling();
           const [, text] = originalText1.splitText(1);
 
@@ -1259,7 +1268,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 0,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1268,7 +1277,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 1,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const lastChild = paragraph.getLastChild();
           lastChild.remove();
 
@@ -1279,7 +1288,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 0,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1288,7 +1297,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 1,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const newText = $createTextNode('replacement');
           const lastChild = paragraph.getLastChild();
           lastChild.replace(newText);
@@ -1300,7 +1309,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 2,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1310,7 +1319,7 @@ describe('LexicalSelection tests', () => {
       // All selected; add/remove/replace in middle [1, 2, 3] -> [1, 2, N, 3]
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = originalText1.getPreviousSibling();
           const lastChild = paragraph.getLastChild();
           const newText = $createTextNode('2');
@@ -1323,7 +1332,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 3,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1332,7 +1341,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = originalText1.getPreviousSibling();
           const newText = $createTextNode('2');
           originalText1.insertAfter(newText);
@@ -1344,7 +1353,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 3,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1353,7 +1362,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = originalText1.getPreviousSibling();
           originalText1.splitText(1);
 
@@ -1364,7 +1373,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 3,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1373,7 +1382,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = originalText1.getPreviousSibling();
           originalText1.remove();
 
@@ -1384,7 +1393,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 1,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1393,7 +1402,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const newText = $createTextNode('replacement');
           originalText1.replace(newText);
 
@@ -1404,7 +1413,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 2,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           originalText1.insertBefore(originalText2);
         },
@@ -1414,7 +1423,7 @@ describe('LexicalSelection tests', () => {
       // Edge cases
       {
         anchorOffset: 3,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = paragraph.getLastChild();
           const newText = $createTextNode('new');
           originalText1.insertBefore(newText);
@@ -1426,7 +1435,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 'bar'.length,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           paragraph.append(originalText2);
         },
@@ -1435,7 +1444,7 @@ describe('LexicalSelection tests', () => {
       },
       {
         anchorOffset: 0,
-        fn: (paragraph, originalText1) => {
+        fn: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = paragraph.getLastChild();
           const newText = $createTextNode('new');
           originalText1.insertBefore(newText);
@@ -1447,7 +1456,7 @@ describe('LexicalSelection tests', () => {
             expectedFocusOffset: 'bar'.length,
           };
         },
-        fnBefore: (paragraph, originalText1) => {
+        fnBefore: (paragraph: ParagraphNode, originalText1: TextNode) => {
           const originalText2 = $createTextNode('bar');
           paragraph.append(originalText2);
         },
@@ -1493,7 +1502,7 @@ describe('LexicalSelection tests', () => {
 
                 const selection = $getSelection();
 
-                if ($isNodeSelection(selection)) {
+                if (!paragraph || !selection || $isNodeSelection(selection)) {
                   return;
                 }
 
@@ -1551,7 +1560,7 @@ describe('LexicalSelection tests', () => {
 
           const selection = $getSelection();
 
-          if ($isNodeSelection(selection)) {
+          if (!selection || $isNodeSelection(selection)) {
             return;
           }
 
@@ -1628,7 +1637,7 @@ describe('LexicalSelection tests', () => {
 
         const selection = $getSelection();
 
-        if ($isNodeSelection(selection)) {
+        if (!selection || $isNodeSelection(selection)) {
           return;
         }
 
@@ -1659,9 +1668,18 @@ describe('LexicalSelection tests', () => {
   });
 
   describe('Decorator text content for selection', () => {
+    type ArgTypes = {
+      paragraph: ParagraphNode;
+      textNode1: TextNode;
+      textNode2: TextNode;
+      decorator: DecoratorNode;
+      anchor;
+      focus;
+    };
+
     [
       {
-        fn: ({textNode1, anchor, focus}) => {
+        fn: ({textNode1, anchor, focus}: ArgTypes) => {
           anchor.set(textNode1.getKey(), 1, 'text');
           focus.set(textNode1.getKey(), 1, 'text');
 
@@ -1670,7 +1688,7 @@ describe('LexicalSelection tests', () => {
         name: 'Not included if cursor right before it',
       },
       {
-        fn: ({textNode2, anchor, focus}) => {
+        fn: ({textNode2, anchor, focus}: ArgTypes) => {
           anchor.set(textNode2.getKey(), 0, 'text');
           focus.set(textNode2.getKey(), 0, 'text');
 
@@ -1679,7 +1697,7 @@ describe('LexicalSelection tests', () => {
         name: 'Not included if cursor right after it',
       },
       {
-        fn: ({textNode1, textNode2, decorator, anchor, focus}) => {
+        fn: ({textNode1, textNode2, decorator, anchor, focus}: ArgTypes) => {
           anchor.set(textNode1.getKey(), 1, 'text');
           focus.set(textNode2.getKey(), 0, 'text');
 
@@ -1688,7 +1706,7 @@ describe('LexicalSelection tests', () => {
         name: 'Included if decorator is selected within text',
       },
       {
-        fn: ({textNode1, textNode2, decorator, anchor, focus}) => {
+        fn: ({textNode1, textNode2, decorator, anchor, focus}: ArgTypes) => {
           anchor.set(textNode1.getKey(), 0, 'text');
           focus.set(textNode2.getKey(), 0, 'text');
 
@@ -1697,7 +1715,7 @@ describe('LexicalSelection tests', () => {
         name: 'Included if decorator is selected with another node before it',
       },
       {
-        fn: ({textNode1, textNode2, decorator, anchor, focus}) => {
+        fn: ({textNode1, textNode2, decorator, anchor, focus}: ArgTypes) => {
           anchor.set(textNode1.getKey(), 1, 'text');
           focus.set(textNode2.getKey(), 1, 'text');
 
@@ -1706,7 +1724,14 @@ describe('LexicalSelection tests', () => {
         name: 'Included if decorator is selected with another node after it',
       },
       {
-        fn: ({paragraph, textNode1, textNode2, decorator, anchor, focus}) => {
+        fn: ({
+          paragraph,
+          textNode1,
+          textNode2,
+          decorator,
+          anchor,
+          focus,
+        }: ArgTypes) => {
           textNode1.remove();
           textNode2.remove();
           anchor.set(paragraph.getKey(), 0, 'block');
@@ -1899,7 +1924,11 @@ describe('LexicalSelection tests', () => {
   });
 
   describe('Node.replace', () => {
-    let text1, text2, text3, paragraph, testEditor;
+    let text1,
+      text2: TextNode,
+      text3: TextNode,
+      paragraph: ParagraphNode,
+      testEditor: LexicalEditor;
 
     beforeEach(async () => {
       testEditor = createTestEditor();
@@ -1955,7 +1984,7 @@ describe('LexicalSelection tests', () => {
 
           const selection = $getSelection();
 
-          if ($isNodeSelection(selection)) {
+          if (!selection || $isNodeSelection(selection)) {
             return;
           }
 
