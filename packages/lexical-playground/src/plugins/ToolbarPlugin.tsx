@@ -333,7 +333,7 @@ function FloatingLinkEditor({editor}: {editor: LexicalEditor}): JSX.Element {
   );
 }
 
-function InsertImageUriDialogBody({
+export function InsertImageUriDialogBody({
   onClick,
 }: {
   onClick: (payload: InsertImagePayload) => void;
@@ -371,7 +371,7 @@ function InsertImageUriDialogBody({
   );
 }
 
-function InsertImageUploadedDialogBody({
+export function InsertImageUploadedDialogBody({
   onClick,
 }: {
   onClick: (payload: InsertImagePayload) => void;
@@ -419,7 +419,7 @@ function InsertImageUploadedDialogBody({
   );
 }
 
-function InsertImageDialog({
+export function InsertImageDialog({
   activeEditor,
   onClose,
 }: {
@@ -465,7 +465,7 @@ function InsertImageDialog({
   );
 }
 
-function InsertTableDialog({
+export function InsertTableDialog({
   activeEditor,
   onClose,
 }: {
@@ -493,7 +493,7 @@ function InsertTableDialog({
   );
 }
 
-function InsertPollDialog({
+export function InsertPollDialog({
   activeEditor,
   onClose,
 }: {
@@ -521,7 +521,7 @@ function InsertPollDialog({
 
 const VALID_TWITTER_URL = /twitter.com\/[0-9a-zA-Z]{1,20}\/status\/([0-9]*)/g;
 
-function InsertTweetDialog({
+export function InsertTweetDialog({
   activeEditor,
   onClose,
 }: {
@@ -605,7 +605,7 @@ function InsertYouTubeDialog({
   );
 }
 
-function InsertEquationDialog({
+export function InsertEquationDialog({
   activeEditor,
   onClose,
 }: {
