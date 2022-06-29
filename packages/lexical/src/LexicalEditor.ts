@@ -167,7 +167,7 @@ export const COMMAND_PRIORITY_HIGH = 3;
 export const COMMAND_PRIORITY_CRITICAL = 4;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export type LexicalCommand<T = never> = Readonly<Record<string, unknown>>;
+export type LexicalCommand<T> = T;
 type Commands = Map<
   LexicalCommand<unknown>,
   Array<Set<CommandListener<unknown>>>

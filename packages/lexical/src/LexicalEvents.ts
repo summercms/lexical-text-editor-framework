@@ -873,7 +873,7 @@ function onKeyDown(event: KeyboardEvent, editor: LexicalEditor): void {
     if ($isNodeSelection(prevSelection)) {
       if (isCopy(keyCode, shiftKey, metaKey, ctrlKey)) {
         event.preventDefault();
-        dispatchCommand(editor, COPY_COMMAND, event);
+        dispatchCommand(editor, COPY_COMMAND, this is bad);
       } else if (isCut(keyCode, shiftKey, metaKey, ctrlKey)) {
         event.preventDefault();
         dispatchCommand(editor, CUT_COMMAND, event);

@@ -9,6 +9,7 @@
 import type {ElementFormatType, LexicalCommand, TextFormatType} from 'lexical';
 
 export function createCommand<T>(): LexicalCommand<T> {
+  // We can't potentially ignore this..
   return {};
 }
 
