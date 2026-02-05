@@ -25,7 +25,7 @@
     "@lexical/selection": "0.3.6",
     "@lexical/table": "0.3.6",
     "@lexical/utils": "0.3.6",
-    "katex": "^0.15.2",
+    "katex": "^0.16.21",
     "lexical": "0.3.6",
     "link-preview-generator": "1.0.7",
     "react": "^18.0.0-alpha-64931821a-20210808",
